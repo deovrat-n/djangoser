@@ -1,0 +1,328 @@
+# The command python manage.py startapp snippets 
+# is used to create a new Django app within your project. An "app" in Django is a
+#  web application that does something specific,
+# and it is meant to be plugged into larger projects.
+
+# We'll need to add our new snippets app and 
+# the rest_framework app to INSTALLED_APPS. Let's edit the tutorial/settings.py file:
+
+
+# Creating a model to work with
+# For the purposes of this tutorial we're going to start by creating a simple Snippet model 
+# that is used to store code snippets. Go ahead and edit the snippets/models.py file.
+#  Note: Good programming practices include comments. Although you will find them in our repository
+#  version of this tutorial code, we have omitted them here to focus on the code itself.
+
+ from django.db import models
+from pygments.lexers import get_all_lexers
+from pygments.styles import get_all_styles
+
+"""
+LEXERS: A list comprehension that gets all lexers and filters them to include only those with at
+ least one alias.
+LANGUAGE_CHOICES: A sorted list of tuples, each containing a lexer alias and the corresponding 
+lexer name. This list will be used as choices for the language field in the Snippet model.
+STYLE_CHOICES: A sorted list of tuples where each style name is paired with itself. 
+This list will be used as choices for the style field in the Snippet model.
+"""
+
+LEXERS = [item for item in get_all_lexers() if item[1]]
+LANGUAGE_CHOICES = sorted([(item[1][0], item[0]) for item in LEXERS])
+STYLE_CHOICES = sorted([(item, item) for item in get_all_styles()])
+"""
+LEXERS: A list comprehension that gets all lexers and filters them to include only those
+ with at least one alias.
+LANGUAGE_CHOICES: A sorted list of tuples, each containing a lexer alias and the 
+corresponding lexer name. This list will be used as choices for the language field in the 
+Snippet model.
+STYLE_CHOICES: A sorted list of tuples where each style name is paired with itself.
+ This list will be used as choices for the style field in the Snippet model.
+
+"""
+
+class Snippet(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    title = models.CharField(max_length=100, blank=True, default='')
+    code = models.TextField()
+    linenos = models.BooleanField(default=False)
+    language = models.CharField(choices=LANGUAGE_CHOICES, default='python', max_length=100)
+    style = models.CharField(choices=STYLE_CHOICES, default='friendly', max_length=100)
+
+    class Meta:
+        ordering = ['created']
+
+
+"""
+created:
+
+DateTimeField(auto_now_add=True): Automatically sets the field to the current
+ date and time when the snippet is created. This field is not editable.
+title:
+
+CharField(max_length=100, blank=True, default=''): A character field with a 
+maximum length of 100 characters. It is optional (blank=True) and defaults to an empty string.
+code:
+
+TextField(): A text field to store the actual code snippet.
+linenos:
+
+BooleanField(default=False): A boolean field to indicate whether line 
+\numbers should be displayed. Defaults to False.
+language:
+
+CharField(choices=LANGUAGE_CHOICES, default='python', max_length=100):
+ A character field that uses LANGUAGE_CHOICES for its options. It defaults to 'python' and has a maximum length of 100 characters.
+style:
+
+CharField(choices=STYLE_CHOICES, default='friendly', max_length=100): 
+A character field that uses STYLE_CHOICES for its options. It defaults to 
+'friendly' and has a maximum length of 100 characters.
+
+
+ordering:
+Specifies the default ordering for Snippet objects when they are retrieved from the database. 
+In this case, snippets will be ordered by the created field in ascending order.
+"""
+
+
+# We'll also need to create an initial migration for our snippet model, 
+# and sync the database for the first time.
+
+# python manage.py makemigrations snippets
+# python manage.py migrate snippets
+
+
+# Creating an initial migration and syncing the database 
+# are essential steps to ensure that the Snippet model is reflected in your database.
+
+# The makemigrations command generates
+# the migration files based on the changes you made to your models.
+# This command will inspect your snippets app and create a new migration file 
+# (usually saved in snippets/migrations/) that includes the database schema for the Snippet model.
+
+python manage.py makemigrations snippets
+
+# Apply the Migrations:
+# The migrate command applies the migration files to your database, 
+# effectively creating or updating the necessary tables and fields.
+python manage.py migrate snippets
+
+"""
+This command will apply the migrations for the snippets app,
+ creating the Snippet table in your database with the fields specified in your model.
+
+
+ By running python manage.py makemigrations snippets and python.manage.py migrate snippets, you are:
+
+Creating a migration file that defines the database schema for your Snippet model.
+Applying this migration to your database, which creates the necessary tables and fields.
+"""
+-------------------------------------------
+
+# Request objects
+
+
+"""
+Django's request.POST
+Limited to Form Data: request.POST only handles form data submitted via an HTTP POST request.
+Only for POST Requests: It is specifically for POST methods and does not work with other HTTP 
+methods like PUT or PATCH.Dictionary-Like Access: Data in request.POST is accessed similarly to a dictionary.
+"""
+from django.http import HttpResponse
+
+def my_view(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        return HttpResponse(f'Hello, {name}')
+
+"""
+DRF's request.data
+Handles Arbitrary Data: Unlike request.POST, request.data can handle various data formats,
+ including JSON, form data, and more.Supports Multiple Methods: request.data works with 
+ multiple HTTP methods, such as POST, PUT, PATCH, and DELETE.Unified Access: It provides
+ a unified way to access request data, regardless of the content type or HTTP method.
+"""
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+@api_view(['POST', 'PUT', 'PATCH'])
+def my_api_view(request):
+    name = request.data.get('name')
+    return Response({'message': f'Hello, {name}'})
+
+"""
+Response objects
+REST framework also introduces a Response object, which is a type of TemplateResponse that 
+takes unrendered content and uses content negotiation to determine the correct content type
+to return to the client.
+"""
+
+
+# Common HTTP Status Codes and Their Named Constants
+# Here are some common HTTP status codes with their corresponding named constants in DRF:
+
+# 200 OK: status.HTTP_200_OK
+# 201 Created: status.HTTP_201_CREATED
+# 204 No Content: status.HTTP_204_NO_CONTENT
+# 400 Bad Request: status.HTTP_400_BAD_REQUEST
+# 401 Unauthorized: status.HTTP_401_UNAUTHORIZED
+# 403 Forbidden: status.HTTP_403_FORBIDDEN
+# 404 Not Found: status.HTTP_404_NOT_FOUND
+# 500 Internal Server Error: status.HTTP_500_INTERNAL_SERVER_ERROR
+"""
+@api_view Decorator
+The @api_view decorator is used to create function-based views (FBVs). It wraps a Django 
+view function to add functionality that is useful for building APIs.
+
+Features
+Request instances: Ensures the view receives DRF's Request instances instead of Django's
+ HttpRequest objects.
+Response instances: Ensures the view can return DRF's Response objects, which provide better 
+control over the response format and status codes.
+Content negotiation: Adds context to Response objects, allowing DRF to automatically
+ determine the correct content type to return (e.g., JSON, XML).
+Method Not Allowed responses: Automatically returns a 405 Method Not Allowed response
+ if the view does not support the requested HTTP method.
+Error handling: Automatically handles ParseError exceptions that may occur when accessing 
+request.data.
+"""
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from snippets.models import Snippet
+from snippets.serializers import SnippetSerializer
+
+@api_view(['GET', 'POST'])
+def snippet_list(request):
+    if request.method == 'GET':
+        snippets = Snippet.objects.all()
+        serializer = SnippetSerializer(snippets, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        serializer = SnippetSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+"""
+APIView Class
+The APIView class is used to create class-based views (CBVs). It provides
+ similar functionality to the @api_view decorator but is designed 
+for use with classes, which can be more organized and flexible for complex views.
+"""
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from snippets.models import Snippet
+from snippets.serializers import SnippetSerializer
+
+class SnippetList(APIView):
+    def get(self, request):
+        snippets = Snippet.objects.all()
+        serializer = SnippetSerializer(snippets, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = SnippetSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Key Differences
+# Function-based vs Class-based: The @api_view decorator is used for 
+# function-based views, while APIView is used for class-based views.
+# Organization: Class-based views can be more organized and flexible, 
+# especially for complex views that require multiple HTTP methods or shared logic.
+# Inheritance and Mixins: Class-based views can take advantage of inheritance and 
+# mixins to reuse code and build more complex views easily.
+
+"""
+Adding optional format suffixes to your URLs allows your API to support different 
+response formats (e.g., JSON, XML) by appending a suffix to the URL. This provides a 
+more flexible and explicit way to request different content types from your API endpoints.
+"""
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from snippets.models import Snippet
+from snippets.serializers import SnippetSerializer
+
+@api_view(['GET', 'POST'])
+def snippet_list(request, format=None):
+    if request.method == 'GET':
+        snippets = Snippet.objects.all()
+        serializer = SnippetSerializer(snippets, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        serializer = SnippetSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def snippet_detail(request, pk, format=None):
+    try:
+        snippet = Snippet.objects.get(pk=pk)
+    except Snippet.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = SnippetSerializer(snippet)
+        return Response(serializer.data)
+
+    elif request.method == 'PUT':
+        serializer = SnippetSerializer(snippet, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'DELETE':
+        snippet.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+# 1. Modify the Views
+# Add the format parameter 
+# to the methods in your views.
+# This allows the view to accept and process the format suffix.
+
+"""
+Update the URL Configuration
+Use the format_suffix_patterns function to update your URL patterns.
+ This function modifies your URL patterns to support format suffixes.
+"""
+
+from django.urls import path
+from rest_framework.urlpatterns import format_suffix_patterns
+from snippets import views
+
+urlpatterns = [
+    path('snippets/', views.snippet_list),
+    path('snippets/<int:pk>/', views.snippet_detail),
+]
+
+urlpatterns = format_suffix_patterns(urlpatterns)
+"""
+
+How It Works
+Original URL: Without format suffixes, you have URLs like:
+
+/snippets/
+/snippets/1/
+With Format Suffixes: After applying format_suffix_patterns, 
+your URLs can also include a format suffix:
+
+/snippets/
+/snippets/1/
+/snippets/1.json
+/snippets/1.xml
+"""
