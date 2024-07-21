@@ -61,9 +61,7 @@ In Django REST Framework (DRF), APIView is a class-based view used to define cus
 Docstring
 python
 Copy code
-"""
-Retrieve, update or delete a snippet instance.
-"""
+
 This is a docstring that describes the purpose of the class. It explains that the class is
  used to retrieve, update, or delete a snippet instance.
 get_object Method
